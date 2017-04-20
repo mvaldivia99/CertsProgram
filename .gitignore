@@ -1,0 +1,5 @@
+*.pyc
+*~
+__pycache__
+selvenv
+chromedriver_win32
