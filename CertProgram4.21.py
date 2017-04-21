@@ -1,5 +1,7 @@
 from selenium import webdriver
 from selenium.common.exceptions import StaleElementReferenceException, NoSuchElementException, NoSuchWindowException
+from tkinter import Tk
+from tkinter.filedialog import askopenfilename
 import time
 
 studentIDList = []
@@ -14,9 +16,12 @@ print("\n\tStudent ID's have been read from file\n")
 auditFileName = "StudentAudit.txt"
 newAudit = open(auditFileName, "w+")
 
-path_to_chromedriver = r"C:\Users\Michell\seleniumWork\chromedriver_win32\chromedriver.exe"
-#"credentials_enabled_service", False
-#"profile.password_manager_enabled", False
+print("Choose path to chromedriver.exe")
+
+#initialize file path dialog prompt
+root = Tk()
+root.withdraw()
+path_to_chromedriver = askopenfilename()
 
 #intialize driver
 browser = webdriver.Chrome(executable_path=path_to_chromedriver)
