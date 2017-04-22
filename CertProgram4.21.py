@@ -4,9 +4,27 @@ from tkinter import Tk
 from tkinter.filedialog import askopenfilename
 import time
 
+#initialize file path dialogue prompt
+root = Tk()
+root.withdraw()
+
 studentIDList = []
 
-with open('studentIDs.txt') as input_file:
+#opens file path prompt for files needed
+print("Choose a path to student ID text file")
+path_to_studentIDFile = askopenfilename()
+
+print("Choose a path to certificate requirements text file")
+path_to_CertTxtFile = askopenfilename()
+
+print("Choose path to chromedriver.exe")
+path_to_chromedriver = askopenfilename()
+
+#in console enter credentials
+SSIDnum = input("Enter SSID: ")
+PINnum = input("Enter PIN: ")
+
+with open(path_to_studentIDFile) as input_file:
     for line in input_file:
         studentIDList.append(line)
 
@@ -15,13 +33,6 @@ print("\n\tStudent ID's have been read from file\n")
 #create a new file that will contain all student Info
 auditFileName = "StudentAudit.txt"
 newAudit = open(auditFileName, "w+")
-
-print("Choose path to chromedriver.exe")
-
-#initialize file path dialog prompt
-root = Tk()
-root.withdraw()
-path_to_chromedriver = askopenfilename()
 
 #intialize driver
 browser = webdriver.Chrome(executable_path=path_to_chromedriver)
@@ -33,9 +44,6 @@ browser.get(url)
 
 while True:
     try:
-        SSIDnum = input("Enter SSID: ")
-        PINnum = input("Enter PIN: ")
-
         #get the SSID input box and input SSID
         browser.find_element_by_xpath("""//*[@id="ctl00_ContentPlaceHolder_Main_TextBox_Sid"]""").send_keys(SSIDnum)
 
@@ -139,7 +147,7 @@ def searchNewStudent(studentID):
             browser.find_element_by_xpath("""//*[@id="ctl00_Button_ChangeLoadedStudent"]""").click()
             time.sleep(3)
             break
-        except (StaleElementReferenceException,NoSuchElementException) as e:
+        except (StaleElementReferenceException, NoSuchElementException) as e:
             browser.find_element_by_xpath("""//*[@id="ctl00_TextBox_LoadedStudentSid"]""").clear()
             time.sleep(1)
             pass
@@ -250,7 +258,7 @@ with open('StudentAudit.txt') as input_file:
 certList = {} 
 certName = ""
 
-with open('CompSciCertificatesText.txt') as input_file:
+with open(path_to_CertTxtFile) as input_file:
     for line in input_file:
         lineList = line.split(",")
         certName = lineList[0] #first element will be the certificate name
@@ -286,20 +294,28 @@ def studentClassList(studentInfo): #take a student and split the class line to o
     studentClasses = set(studentClasses)
     return studentClasses
 
+                
+
+studentCertFile = open("StudentCerts.txt", "w+")
+
 def checkCerts():
     for studentName in studentList: #take individual student
         studentInfo = studentList[studentName] #make a list of the classes student has taken
-        print("Student Name:", studentName)
-        print("Student ID: ", studentInfo[0])
+        studentCertFile.write("Student Name:" + studentName)
+        studentCertFile.write("Student ID: " + studentInfo[0])
+        #print("Student Name:", studentName)
+        #print("Student ID: ", studentInfo[0])
         studentCourses = studentClassList(studentInfo) #call the studentClassList function to filter classes only
 
         for cert in certList:
             completedCourses = certCompare(certList[cert], studentCourses)
         
-            if len(completedCourses) >= len(certList[cert]):
-                print(cert)
+            if len(completedCourses) == len(certList[cert]):
+                studentCertFile.write(cert)
+                #print(cert)
+                print("Certificates discovered: ", certCount)
                 for course in completedCourses:
-                    print("\t", course)
-                
-
-checkCerts()  
+                    studentCertFile.write("\t", course)
+                    #print("\t", course)
+checkCerts()
+print("Program complete")
