@@ -269,14 +269,16 @@ with open(path_to_CertTxtFile) as input_file:
                 certList[certName].append(course)#add courses to certList
 
         
-
+#returns a list of courses that student has completed on course
 def certCompare(requiredCourses, studentCourses):
-    completedCourses = []
+    completedCourses = [] 
     
-    for studCourse in studentCourses:
-        for reqCourse in requiredCourses:
-            if reqCourse.find(studCourse) != -1:
+    for reqCourse in requiredCourses:
+        for studCourse in studentCourses:
+            if reqCourse.find(studCourse) != -1: #if the student has the required course
                 completedCourses.append(studCourse)
+            if reqCourse.find("[OR]") != -1: #if the required course has [OR] option
+                break #stop the searching the student courses
                 
     return completedCourses
 
@@ -299,23 +301,27 @@ def studentClassList(studentInfo): #take a student and split the class line to o
 studentCertFile = open("StudentCerts.txt", "w+")
 
 def checkCerts():
+    certCount = 0
     for studentName in studentList: #take individual student
         studentInfo = studentList[studentName] #make a list of the classes student has taken
-        studentCertFile.write("Student Name:" + studentName)
-        studentCertFile.write("Student ID: " + studentInfo[0])
+        studentCertFile.write("Student Name:" + studentName + "\n")
+        studentCertFile.write("Student ID: " + studentInfo[0] + "\n")
         #print("Student Name:", studentName)
         #print("Student ID: ", studentInfo[0])
         studentCourses = studentClassList(studentInfo) #call the studentClassList function to filter classes only
-
+        
         for cert in certList:
+            #get a list of student courses that have been completed
             completedCourses = certCompare(certList[cert], studentCourses)
         
-            if len(completedCourses) == len(certList[cert]):
-                studentCertFile.write(cert)
+            if len(completedCourses) == len(certList[cert]): #if a certificate is found
+                studentCertFile.write(cert) #add to student cert text file
                 #print(cert)
+                certCount += 1
                 print("Certificates discovered: ", certCount)
                 for course in completedCourses:
-                    studentCertFile.write("\t", course)
+                    studentCertFile.write("\n\t" + course) #write the courses 
                     #print("\t", course)
+    print("Number of certificates found: ", certCount)
 checkCerts()
 print("Program complete")

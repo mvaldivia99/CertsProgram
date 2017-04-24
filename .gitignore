@@ -3,3 +3,7 @@
 __pycache__
 selvenv
 chromedriver_win32
+StudentAudit.txt
+StudentIDs.txt
+StudentCerts.txt
+debug.log
