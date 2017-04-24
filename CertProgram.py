@@ -4,21 +4,19 @@ from tkinter import Tk
 from tkinter.filedialog import askopenfilename
 import time
 
-#initialize file path dialogue prompt
 root = Tk()
 root.withdraw()
-
 studentIDList = []
 
 #opens file path prompt for files needed
 print("Choose a path to student ID text file")
-path_to_studentIDFile = askopenfilename()
+path_to_studentIDFile = askopenfilename(filetypes=[('Text Files','*.txt')], title='Select Student ID text file')
 
 print("Choose a path to certificate requirements text file")
-path_to_CertTxtFile = askopenfilename()
+path_to_CertTxtFile = askopenfilename(filetypes=[('Text Files','*.txt')],title='Select Certificate Requirements text file')
 
 print("Choose path to chromedriver.exe")
-path_to_chromedriver = askopenfilename()
+path_to_chromedriver = askopenfilename(filetypes=[('Executable Files', '*.exe')],title='Select Chromedriver.exe')
 
 #in console enter credentials
 SSIDnum = input("Enter SSID: ")
