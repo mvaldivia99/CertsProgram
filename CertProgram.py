@@ -57,6 +57,7 @@ while True:
         browser.find_element_by_xpath("""//*[@id="ctl00_ContentPlaceHolder_Main_Button_Accept"]""").click()
         break
     except (StaleElementReferenceException, NoSuchElementException) as e:
+        time.sleep(1)
         pass
 
 #get the first student ID on the list
@@ -69,9 +70,11 @@ while True:
     try:
         #locate studentID field and input studentID
         browser.find_element_by_xpath("""//*[@id="ctl00_ContentPlaceHolder_Main_TextBox_Sid"]""").send_keys(studentID)
+        time.sleep(1)
         browser.find_element_by_xpath("""//*[@id="ctl00_ContentPlaceHolder_Main_Button_SidSearch"]""").click() #search button click
         time.sleep(1)
         browser.find_element_by_xpath("""//*[@id="ctl00_ContentPlaceHolder_Main_GridView_Students_ctl02_Button_SelectStudent"]""").click() #select student
+        time.sleep(1)
         break
     except (StaleElementReferenceException, NoSuchElementException) as e:
         browser.find_element_by_xpath("""//*[@id="ctl00_ContentPlaceHolder_Main_TextBox_Sid"]""").clear()
@@ -89,6 +92,7 @@ def writeStudentAudit():
             #get student name and studentID
             studentName = browser.find_element_by_xpath("""//*[@id="ctl00_ContentPlaceHolder_Main_Panel_BSI_Hider"]/div/div/table/tbody/tr[1]/td[2]/strong""").text
             studentID = browser.find_element_by_xpath("""//*[@id="ctl00_ContentPlaceHolder_Main_Panel_BSI_Hider"]/div/div/table/tbody/tr[2]/td[2]""").text
+            time.sleep(1)
             break
         except (StaleElementReferenceException, NoSuchElementException) as e:
             studentName = ""
@@ -99,6 +103,7 @@ def writeStudentAudit():
     while True:
         try:
             browser.find_element_by_xpath("""//*[@id="ctl00_ContentPlaceHolder_Main_Image_UnofficialTranscript"]""").click()
+            time.sleep(1)
             break
         except NoSuchElementException as e:
             time.sleep(1)
