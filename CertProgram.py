@@ -4,6 +4,24 @@ from tkinter import Tk
 from tkinter.filedialog import askopenfilename
 import time
 
+SSIDnum = 0
+PINnum = 0
+path_to_chromedriver = " "
+
+#get the adp credenials
+with open('adp_credentials.txt') as input_file:
+    for i, line in enumerate(input_file):
+        if i == 0:
+            SSIDnum = line
+        if i == 1:
+            PINnum = line
+
+#get the path to chromedriver
+with open('chromedriver_path.txt') as input_file:
+    for i, line in enumerate(input_file):
+        if i == 0:
+            path_to_chromedriver = line
+
 root = Tk()
 root.withdraw()
 studentIDList = []
@@ -14,13 +32,6 @@ path_to_studentIDFile = askopenfilename(filetypes=[('Text Files','*.txt')], titl
 
 print("Choose a path to certificate requirements text file")
 path_to_CertTxtFile = askopenfilename(filetypes=[('Text Files','*.txt')],title='Select Certificate Requirements text file')
-
-print("Choose path to chromedriver.exe")
-path_to_chromedriver = askopenfilename(filetypes=[('Executable Files', '*.exe')],title='Select Chromedriver.exe')
-
-#in console enter credentials
-SSIDnum = input("Enter SSID: ")
-PINnum = input("Enter PIN: ")
 
 with open(path_to_studentIDFile) as input_file:
     for line in input_file:
@@ -35,7 +46,6 @@ newAudit = open(auditFileName, "w+")
 #intialize driver
 browser = webdriver.Chrome(executable_path=path_to_chromedriver)
 
-#https://adp.bigbend.edu/adp/Login.aspx
 #get the URL
 url = r'https://adp.bigbend.edu/adp/Login.aspx'
 browser.get(url)
@@ -47,16 +57,25 @@ while True:
 
         #get the PIN input box and input PIN
         browser.find_element_by_xpath("""//*[@id="ctl00_ContentPlaceHolder_Main_TextBox_Pin"]""").send_keys(PINnum)
-
+        
         #get the login button and click
         browser.find_element_by_xpath("""//*[@id="ctl00_ContentPlaceHolder_Main_Button_Login"]""").click()
 
         time.sleep(4)
+        break
+    except (StaleElementReferenceException, NoSuchElementException) as e:
+        time.sleep(3)
+        browser.find_element_by_xpath("""//*[@id="ctl00_ContentPlaceHolder_Main_TextBox_Sid"]""").clear()
+        browser.find_element_by_xpath("""//*[@id="ctl00_ContentPlaceHolder_Main_TextBox_Pin"]""").clear()
+        time.sleep(1)
+        pass
 
+while True:
+    try:
         #click ACCEPT on FERPA
         browser.find_element_by_xpath("""//*[@id="ctl00_ContentPlaceHolder_Main_Button_Accept"]""").click()
         break
-    except (StaleElementReferenceException, NoSuchElementException) as e:
+    except(StaleElementReferenceException, NoSuchElementException) as e:
         time.sleep(1)
         pass
 
@@ -263,28 +282,49 @@ certName = ""
 
 with open(path_to_CertTxtFile) as input_file:
     for line in input_file:
-        lineList = line.split(",")
-        certName = lineList[0] #first element will be the certificate name
-        certList[certName] = [] #certName as key, new list for each course
-        
-        for index, course in enumerate(lineList):
-            if index > 0:
-                certList[certName].append(course)#add courses to certList
-
+        if line.find(":") != -1: #top line will have a : symbol
+            certName = line.strip()
+            certList[certName] = []
+        elif line.find("1") != -1 or line.find("2") != -1 or line.find("*"): #find a course
+            cert_str = line.strip()
+            certList[certName].append(cert_str)
         
 #returns a list of courses that student has completed on course
 def certCompare(requiredCourses, studentCourses):
     completedCourses = [] 
+    electivesList = [] 
     
     for reqCourse in requiredCourses:
+        if reqCourse.find("*") != -1:
+            electivesList.append(reqCourse)
+            pass
         for studCourse in studentCourses:
             if reqCourse.find(studCourse) != -1: #if the student has the required course
                 completedCourses.append(studCourse)
             if reqCourse.find("[OR]") != -1: #if the required course has [OR] option
                 break #stop the searching the student courses
-                
-    return completedCourses
+    
+    if len(electivesList) > 0: #if there are elements in the electives list
+        for reqCourse in electivesList:
+            strList_reqCourse = reqCourse.split() #split string into a list
+            astIndex = strList_reqCourse.index("*")  #find index of asterisk
+            deptCode = strList_reqCourse[astIndex - 1] #get the dept code that will be index before asterisk
 
+            for studCourse in studentCourses:
+                if studCourse in completedCourses: #if the student course has already been counted
+                    pass #keep going
+                else:
+                    str_studCourse = studCourse.split()
+                    str_studCourseDept = str_studCourse[0] #first element will be student course dept code
+                    
+                    if reqCourse.find(studCourse) != -1:
+                        completedCourses.append(studCourse)
+                        break
+                    elif str_studCourseDept == deptCode:
+                        completedCourses.append(studCourse)
+                        break
+                    
+    return completedCourses
 
 #returns a list
 def studentClassList(studentInfo): #take a student and split the class line to only get the department and class number
@@ -307,24 +347,22 @@ def checkCerts():
     certCount = 0
     for studentName in studentList: #take individual student
         studentInfo = studentList[studentName] #make a list of the classes student has taken
-        studentCertFile.write("Student Name:" + studentName + "\n")
-        studentCertFile.write("Student ID: " + studentInfo[0] + "\n")
-        #print("Student Name:", studentName)
-        #print("Student ID: ", studentInfo[0])
         studentCourses = studentClassList(studentInfo) #call the studentClassList function to filter classes only
         
         for cert in certList:
             #get a list of student courses that have been completed
             completedCourses = certCompare(certList[cert], studentCourses)
-        
+            
             if len(completedCourses) == len(certList[cert]): #if a certificate is found
+                studentCertFile.write("Student Name:" + studentName + "\n")
+                studentCertFile.write("Student ID: " + studentInfo[0] + "\n")
                 studentCertFile.write(cert) #add to student cert text file
                 #print(cert)
                 certCount += 1
-                print("Certificates discovered: ", certCount)
                 for course in completedCourses:
-                    studentCertFile.write("\n\t" + course) #write the courses 
-                    #print("\t", course)
+                    studentCertFile.write("\n\t" + course) #write the courses
+                    
     print("Number of certificates found: ", certCount)
+    
 checkCerts()
 print("Program complete")

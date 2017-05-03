@@ -7,3 +7,5 @@ StudentAudit.txt
 StudentIDs.txt
 StudentCerts.txt
 debug.log
+adp_credentials.txt
+chromedriver_path.txt
