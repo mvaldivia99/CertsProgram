@@ -68,7 +68,7 @@ while True:
         browser.find_element_by_xpath("""//*[@id="ctl00_ContentPlaceHolder_Main_TextBox_Sid"]""").clear()
         browser.find_element_by_xpath("""//*[@id="ctl00_ContentPlaceHolder_Main_TextBox_Pin"]""").clear()
         time.sleep(1)
-        pass
+        continue
 
 while True:
     try:
@@ -77,7 +77,7 @@ while True:
         break
     except(StaleElementReferenceException, NoSuchElementException) as e:
         time.sleep(1)
-        pass
+        continue
 
 #get the first student ID on the list
 studentID = studentIDList[0]
@@ -98,7 +98,7 @@ while True:
     except (StaleElementReferenceException, NoSuchElementException) as e:
         browser.find_element_by_xpath("""//*[@id="ctl00_ContentPlaceHolder_Main_TextBox_Sid"]""").clear()
         time.sleep(2)
-        pass
+        continue
 
 time.sleep(1)
 
@@ -116,7 +116,7 @@ def writeStudentAudit():
         except (StaleElementReferenceException, NoSuchElementException) as e:
             studentName = ""
             time.sleep(1)
-            pass
+            continue
 
     time.sleep(1)
     while True:
@@ -126,7 +126,7 @@ def writeStudentAudit():
             break
         except NoSuchElementException as e:
             time.sleep(1)
-            pass
+            continue
         
     print("Appending audit for student ", studentName, studentID)
     time.sleep(1)
@@ -172,7 +172,7 @@ def searchNewStudent(studentID):
         except (StaleElementReferenceException, NoSuchElementException) as e:
             browser.find_element_by_xpath("""//*[@id="ctl00_TextBox_LoadedStudentSid"]""").clear()
             time.sleep(1)
-            pass
+            continue
 
     time.sleep(2)
     
@@ -200,11 +200,13 @@ studentList = {} #contains list of student info
 name = ""
 
 def addClass(docLine): #adds a class to a student's information
-    courseLine = docLine.split()
     
+    courseLine = docLine.split()
+
     #removes the last two elements of the line, which are the GPA and the credits earned
     courseLine.pop(-1)
     courseLine.pop(-1)
+    
     #put line back together
     course = ""
     for indivWord in courseLine:
@@ -216,7 +218,7 @@ def addClass(docLine): #adds a class to a student's information
 #these courses will only show the department and number
 def addTRClass(docLine):
     courseLine = docLine.split()
-
+    
     #remove the last three columns of the line
     courseLine.pop(-1)
     courseLine.pop(-1)
@@ -239,11 +241,13 @@ with open('StudentAudit.txt') as input_file:
             name = line.split() #split the name into two parts and remove \n
             name = name[1] + " " + name[0]
             studentList[name] = [] #add student name as key in dictionary, make a new list for each student
-                
+            continue
+        
         if line.find("Student ID:") != -1: #find student ID
             line = line[12:] #remove everything from line but ID
             studentID = line.split() #remove any blank spaces or \n at line ends
             studentList[name].append(studentID[0]) #add student ID to student's info
+            continue
 
         #audit contains a line that marks where courses begin
         #any line after that will be added differently
@@ -252,29 +256,8 @@ with open('StudentAudit.txt') as input_file:
             pass
         if TRCrsFlag == 1 and line.find("TRANSFER-IN COURSES BEGIN HERE") == -1 and not line.isspace(): #line is under transfer courses line and not whitespace
             addTRClass(line)
-        else:            
-            #find CS Classes
-            if line.find("CS 1") != -1 or line.find("CS 2") != -1: #if the class is a CS class
-                addClass(line) #add class to student list
-
-            #find psych/soc/bus classes
-            if line.find("BUS 120") != -1 or line.find("PSYC& 100") != -1 or line.find("SOC& 101") != -1:
-                addClass(line) #add class to student list
-
-            #find communications classes
-            if line.find("CMST 100") != -1 or line.find("CMST& 220") != -1:
-                addClass(line) 
-
-            #find english classes
-            if line.find("ENGL& 109") != -1 or line.find("ENGL& 101") != -1:
-                addClass(line) 
-
-            #find first aid
-            if line.find("FAD 150") != -1:
-                addClass(line)
-
-            #find Math 141
-            if line.find("MATH& 141") != -1:
+        else:
+            if not line.isspace(): #checks if the line is whitespace
                 addClass(line)
 #------------------------------COMPARE COURSES AGAINST CERTIFICATES------------------------------------------
 certList = {} 
@@ -297,7 +280,7 @@ def certCompare(requiredCourses, studentCourses):
     for reqCourse in requiredCourses:
         if reqCourse.find("*") != -1:
             electivesList.append(reqCourse)
-            pass
+            continue
         for studCourse in studentCourses:
             if reqCourse.find(studCourse) != -1: #if the student has the required course
                 completedCourses.append(studCourse)
@@ -316,7 +299,6 @@ def certCompare(requiredCourses, studentCourses):
                 else:
                     str_studCourse = studCourse.split()
                     str_studCourseDept = str_studCourse[0] #first element will be student course dept code
-                    
                     if reqCourse.find(studCourse) != -1:
                         completedCourses.append(studCourse)
                         break
