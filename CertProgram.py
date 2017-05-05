@@ -1,9 +1,10 @@
 from selenium import webdriver
 from selenium.common.exceptions import StaleElementReferenceException, NoSuchElementException, NoSuchWindowException
 from tkinter import Tk
+from tkinter import messagebox
 from tkinter.filedialog import askopenfilename
 import time
-
+   
 SSIDnum = 0
 PINnum = 0
 path_to_chromedriver = " "
@@ -20,7 +21,7 @@ with open('adp_credentials.txt') as input_file:
 with open('chromedriver_path.txt') as input_file:
     for i, line in enumerate(input_file):
         if i == 0:
-            path_to_chromedriver = line
+            path_to_chromedriver = line.strip()
 
 root = Tk()
 root.withdraw()
@@ -36,6 +37,10 @@ path_to_CertTxtFile = askopenfilename(filetypes=[('Text Files','*.txt')],title='
 with open(path_to_studentIDFile) as input_file:
     for line in input_file:
         studentIDList.append(line)
+
+def errorParsing(errorStr):
+    messagebox.showinfo("Error", errorStr)
+    browser.quit()
 
 print("\n\tStudent ID's have been read from file\n")
 
@@ -61,7 +66,13 @@ while True:
         #get the login button and click
         browser.find_element_by_xpath("""//*[@id="ctl00_ContentPlaceHolder_Main_Button_Login"]""").click()
 
-        time.sleep(4)
+        time.sleep(1)
+        
+        #if len(browser.find_elements_by_xpath("""//*//*[@id="ctl00_ContentPlaceHolder_Main_Label_Error"]""")) > 0:
+         #   errorParsing("Invalid credentials; check credentials document")
+          #  break   
+        time.sleep(2)
+        
         break
     except (StaleElementReferenceException, NoSuchElementException) as e:
         time.sleep(3)
@@ -91,8 +102,15 @@ while True:
         browser.find_element_by_xpath("""//*[@id="ctl00_ContentPlaceHolder_Main_TextBox_Sid"]""").send_keys(studentID)
         time.sleep(1)
         browser.find_element_by_xpath("""//*[@id="ctl00_ContentPlaceHolder_Main_Button_SidSearch"]""").click() #search button click
-        time.sleep(1)
-        browser.find_element_by_xpath("""//*[@id="ctl00_ContentPlaceHolder_Main_GridView_Students_ctl02_Button_SelectStudent"]""").click() #select student
+        time.sleep(2)
+        
+        if browser.find_element_by_xpath("""//*[@id="ctl00_ContentPlaceHolder_Main_Label_SearchMessage"]""").text == "No Student Found":
+            errorParsing("No Student found; check Student ID document input")
+            break
+        else:        
+            browser.find_element_by_xpath("""//*[@id="ctl00_ContentPlaceHolder_Main_GridView_Students_ctl02_Button_SelectStudent"]""").click() #select student
+            time.sleep(2)
+
         time.sleep(1)
         break
     except (StaleElementReferenceException, NoSuchElementException) as e:
@@ -136,16 +154,22 @@ def writeStudentAudit():
 
     #find all elements with tag name table row [tr] and add to list
     tableRows = browser.find_elements_by_tag_name("tr")
-
+    courseFlagStart = 0 #indicates when the courses begin in table rows
     courses = []
     #find courses in table rows list
     for row in tableRows:
-        #create a line that states when the transfer courses begin
-        if row.text.find("YRQ") != -1 and row.text.find("Eval") != -1:
-            courses.append("---- TRANSFER-IN COURSES BEGIN HERE ----")
-        #row must contain a period to indicate a valid GPA and not dashes or asterisks
-        if row.text.find(".") != -1 and row.text.find("-") == -1 and row.text.find("*") == -1 and row.text.find("0.0") == -1:
-            courses.append(row.text)
+        if row.text.find("Course") != -1:
+            courseFlagStart = 1
+            
+        if courseFlagStart == 1:                
+            #create a line that states when the transfer courses begin
+            if row.text.find("YRQ") != -1 and row.text.find("Eval") != -1:
+                courses.append("---- TRANSFER-IN COURSES BEGIN HERE ----")
+            #row must contain a period to indicate a valid GPA and not dashes or asterisks
+            if row.text.find(".") != -1 and row.text.find("-") == -1 and row.text.find("*") == -1 and row.text.find("0.0") == -1:
+                courses.append(row.text)
+        else:
+            continue
 
     #write student name and ID
     newAudit.write("Student Name: "+ studentName + "\n")
@@ -268,7 +292,7 @@ with open(path_to_CertTxtFile) as input_file:
         if line.find(":") != -1: #top line will have a : symbol
             certName = line.strip()
             certList[certName] = []
-        elif line.find("1") != -1 or line.find("2") != -1 or line.find("*"): #find a course
+        elif line.find("1") != -1 or line.find("2") != -1 or line.find("*") and not line.isspace(): #find a course
             cert_str = line.strip()
             certList[certName].append(cert_str)
         
@@ -276,7 +300,7 @@ with open(path_to_CertTxtFile) as input_file:
 def certCompare(requiredCourses, studentCourses):
     completedCourses = [] 
     electivesList = [] 
-    
+
     for reqCourse in requiredCourses:
         if reqCourse.find("*") != -1:
             electivesList.append(reqCourse)
@@ -284,9 +308,10 @@ def certCompare(requiredCourses, studentCourses):
         for studCourse in studentCourses:
             if reqCourse.find(studCourse) != -1: #if the student has the required course
                 completedCourses.append(studCourse)
-            if reqCourse.find("[OR]") != -1: #if the required course has [OR] option
-                break #stop the searching the student courses
+                break
+
     
+
     if len(electivesList) > 0: #if there are elements in the electives list
         for reqCourse in electivesList:
             strList_reqCourse = reqCourse.split() #split string into a list
@@ -295,17 +320,18 @@ def certCompare(requiredCourses, studentCourses):
 
             for studCourse in studentCourses:
                 if studCourse in completedCourses: #if the student course has already been counted
-                    pass #keep going
+                    continue #keep going
                 else:
                     str_studCourse = studCourse.split()
                     str_studCourseDept = str_studCourse[0] #first element will be student course dept code
+
                     if reqCourse.find(studCourse) != -1:
                         completedCourses.append(studCourse)
                         break
                     elif str_studCourseDept == deptCode:
                         completedCourses.append(studCourse)
                         break
-                    
+              
     return completedCourses
 
 #returns a list
@@ -330,16 +356,21 @@ def checkCerts():
     for studentName in studentList: #take individual student
         studentInfo = studentList[studentName] #make a list of the classes student has taken
         studentCourses = studentClassList(studentInfo) #call the studentClassList function to filter classes only
-        
+        didPrintName = 0
         for cert in certList:
             #get a list of student courses that have been completed
             completedCourses = certCompare(certList[cert], studentCourses)
             
+            
             if len(completedCourses) == len(certList[cert]): #if a certificate is found
-                studentCertFile.write("Student Name:" + studentName + "\n")
-                studentCertFile.write("Student ID: " + studentInfo[0] + "\n")
+                if didPrintName == 0:
+                    studentCertFile.write("Student Name:" + studentName + "\n")
+                    studentCertFile.write("Student ID: " + studentInfo[0] + "\n")
+                    didPrintName = 1
+                
+                    
                 studentCertFile.write(cert) #add to student cert text file
-                #print(cert)
+                    
                 certCount += 1
                 for course in completedCourses:
                     studentCertFile.write("\n\t" + course) #write the courses
