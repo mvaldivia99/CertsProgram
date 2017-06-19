@@ -367,13 +367,14 @@ def checkCerts():
                     studentCertFile.write("Student Name:" + studentName + "\n")
                     studentCertFile.write("Student ID: " + studentInfo[0] + "\n")
                     didPrintName = 1
-                
-                    
+                                    
                 studentCertFile.write(cert) #add to student cert text file
                     
                 certCount += 1
                 for course in completedCourses:
                     studentCertFile.write("\n\t" + course) #write the courses
+
+                print("\n\n")
                     
     print("Number of certificates found: ", certCount)
     
