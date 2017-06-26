@@ -364,11 +364,11 @@ def checkCerts():
             
             if len(completedCourses) == len(certList[cert]): #if a certificate is found
                 if didPrintName == 0:
-                    studentCertFile.write("Student Name:" + studentName + "\n")
-                    studentCertFile.write("Student ID: " + studentInfo[0] + "\n")
+                    studentCertFile.write("\nStudent Name:" + studentName)
+                    studentCertFile.write("\nStudent ID: " + studentInfo[0])
                     didPrintName = 1
                                     
-                studentCertFile.write(cert) #add to student cert text file
+                studentCertFile.write("\n" + cert) #add to student cert text file
                     
                 certCount += 1
                 for course in completedCourses:
