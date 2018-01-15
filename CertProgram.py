@@ -121,7 +121,7 @@ while True:
 time.sleep(1)
 
 def writeStudentAudit():
-    #prevent StaleElementException'
+    #prevent StaleElementException
     studentName = ""
     studentID = ""
     while True:
@@ -310,7 +310,10 @@ def certCompare(requiredCourses, studentCourses):
                 completedCourses.append(studCourse)
                 break
 
-    
+    #1/14/2018 Edit: If all the completed courses meet the required courses
+    # Skip looking for the electives        
+    if len(completedCourses) == len(requiredCourses):
+        return completedCourses
 
     if len(electivesList) > 0: #if there are elements in the electives list
         for reqCourse in electivesList:
