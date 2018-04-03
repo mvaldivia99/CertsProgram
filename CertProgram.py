@@ -1,5 +1,5 @@
 from selenium import webdriver
-from selenium.common.exceptions import StaleElementReferenceException, NoSuchElementException, NoSuchWindowException
+from selenium.common.exceptions import StaleElementReferenceException, NoSuchElementException, NoSuchWindowException, UnexpectedAlertPresentException
 from tkinter import Tk
 from tkinter import messagebox
 from tkinter.filedialog import askopenfilename
@@ -129,9 +129,13 @@ def writeStudentAudit():
             #get student name and studentID
             studentName = browser.find_element_by_xpath("""//*[@id="ctl00_ContentPlaceHolder_Main_Panel_BSI_Hider"]/div/div/table/tbody/tr[1]/td[2]/strong""").text
             studentID = browser.find_element_by_xpath("""//*[@id="ctl00_ContentPlaceHolder_Main_Panel_BSI_Hider"]/div/div/table/tbody/tr[2]/td[2]""").text
-            time.sleep(1)
+            time.sleep(1) 
             break
-        except (StaleElementReferenceException, NoSuchElementException) as e:
+        except (StaleElementReferenceException, NoSuchElementException, UnexpectedAlertPresentException) as e: #EDIT 4/3/2018: ADDED UNEXPECTREDALERTPRESENTEXCEPTION
+            if type(e) == UnexpectedAlertPresentException:
+                alert = browser.switch_to.alert
+                alert.dismiss()
+
             studentName = ""
             time.sleep(1)
             continue
